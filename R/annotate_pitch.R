@@ -88,7 +88,7 @@ annotate_base_pitch <- function(colour, fill, spec, linewidth, alpha, linetype) 
     annotate_circle(
       x = midpoint$x,
       y = midpoint$y,
-      r = spec$penalty_spot_distance,
+      r = 10 / 12 * spec$penalty_spot_distance,
       colour    = colour,
       linewidth = linewidth,
       linetype  = linetype,
@@ -164,7 +164,7 @@ annotate_penalty_box <- function(colour, dimensions, spec, linewidth, alpha, lin
       xintercept = spec$origin_x + spec$length - spec$penalty_box_length,
       x0 = spec$origin_x + spec$length - spec$penalty_spot_distance,
       y0 = midpoint$y,
-      r  = spec$penalty_spot_distance,
+      r  = 10 / 12 * spec$penalty_spot_distance,
       direction = "left",
       colour    = colour,
       linewidth = linewidth,
@@ -218,7 +218,7 @@ annotate_penalty_box <- function(colour, dimensions, spec, linewidth, alpha, lin
       xintercept = spec$origin_x + spec$penalty_box_length,
       x0 = spec$origin_x + spec$penalty_spot_distance,
       y0 = midpoint$y,
-      r  = spec$penalty_spot_distance,
+      r  = 10 / 12 * spec$penalty_spot_distance,
       direction = "right",
       colour    = colour,
       linewidth = linewidth,
@@ -337,7 +337,8 @@ annotate_intersection_arc <- function(xintercept, x0, y0, r, direction, ...) {
     return(list())
   }
 
-  # Determine the curvature by finding the central angle
+  # Determine the curvature by finding the angle between the penalty spot
+  # and the intersection points
   # I *think* I can approximate the curvature is just a ratio (i.e. x:1)
   # so a curvature of 1 is 1:1, or 50% of the circle.
   # i.e. curvature / (curvature + 1) = arc proportion
@@ -345,9 +346,9 @@ annotate_intersection_arc <- function(xintercept, x0, y0, r, direction, ...) {
   # `annotate_intersection_arc` with `xintercept = spec$penalty_spot_distance`
   # on top of a pitch_international pitch and comparing to the drawn arc)
   # but it is close enough.
-  angle <- acos((r^2 + r^2 - abs(pos_y - neg_y)^2)/(2*r^2))
-  arc_proportion <- angle/(2*pi)
-  curvature <- -arc_proportion/(arc_proportion-1)
+  dist_x <- xintercept - x0
+  angle <- acos(2 * (dist_x / r)^2 - 1)
+  curvature <- grid::arcCurvature(angle * 180 / pi)
 
   ggplot2::annotate(
     geom   = "curve",
@@ -356,7 +357,7 @@ annotate_intersection_arc <- function(xintercept, x0, y0, r, direction, ...) {
     y      = pos_y,
     yend   = neg_y,
     curvature = curvature*direction_values[direction],
-    ncp    = 100,
+    ncp    = 500,
     ...
   )
 }
